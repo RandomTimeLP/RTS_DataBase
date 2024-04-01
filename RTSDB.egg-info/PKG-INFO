@@ -1,8 +1,8 @@
 Metadata-Version: 2.1
 Name: RTSDB
-Version: 1.0
+Version: 1.3
 Summary: Create yourself a simple database with this package.
-Home-page: https://github.com/RandomTimeLP/RTS_Simpeldatabase/
+Home-page: https://github.com/RandomTimeLP/RTS_DataBase/
 Author: RandomTimeTV
 Author-email: dergepanzerte1@gmail.com
 License: MIT with required credit to the author.

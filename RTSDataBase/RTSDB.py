@@ -109,16 +109,18 @@ class DB:
         
         unique_fields = [field for field, state in zip(self.header["fields"], self.header["states"]) if state in  ["unique", "ul"]]
         index_fields = [field for field, state in zip(self.header["fields"], self.header["states"]) if state == "index"]
+        try:
+            for ex_record in self.data:
+                for u_field in unique_fields:
+                    if record.get(u_field) is not None and record.get(u_field) == ex_record[u_field]:
+                        raise ValueError(f"⚠️  Warning: Record with >>> {u_field}={record[u_field]} <<< already exists in the database file: {self.filename}")
 
-        for ex_record in self.data:
-            for u_field in unique_fields:
-                if record.get(u_field) is not None and record.get(u_field) == ex_record[u_field]:
-                    raise ValueError(f"⚠️  Warning: Record with >>> {u_field}={record[u_field]} <<< already exists")
-                
-            for i_field in index_fields:
-                if record.get(i_field) is not None and record.get(i_field) == ex_record[i_field]:
-                    raise ValueError(f"⚠️  Warning: Record with the value >>> {record[i_field]} <<< already exists in index field")
-        
+                for i_field in index_fields:
+                    if record.get(i_field) is not None and record.get(i_field) == ex_record[i_field]:
+                        raise ValueError(f"⚠️  Warning: Record with the value >>> {record[i_field]} <<< already exists in index field in the database file: {self.filename}")
+        except Exception as e:
+            print(e)
+            return
         self._validate_create(record)
         
         existing_ids = [record["__id"] for record in self.data]

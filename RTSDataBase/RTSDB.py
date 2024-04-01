@@ -20,7 +20,7 @@ class DB:
             self.header = None
 
     def dump(self):
-        print("Debricated function. Use 'dump_header()', 'header' and 'formated_dump([format=<csv|plain>])' instead.")
+        print(" .dump() is Debricated. Use 'dump_header()', 'header' and 'formated_dump([format=<csv|plain>])' instead.")
         return (self.header,self.data)
 
     
@@ -211,7 +211,7 @@ class DB:
 
     # See **Search records** in the README.md
     def find(self, query, fieldname="__any", case_sensitive=True, allow_typo=False):
-        print("Finding > Query: ",query, "Fieldname: ",fieldname, "Case sensitiv: ",case_sensitive, "Allow typo: ",allow_typo)
+        #print("Finding > Query: ",query, "Fieldname: ",fieldname, "Case sensitiv: ",case_sensitive, "Allow typo: ",allow_typo)
         matches = []
         for record in self.data:
             # fieldname = "__any" means that the query will be searched in all fields except "__id"

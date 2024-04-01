@@ -1,1 +1,1 @@
-no direct contribution
+no direct contribution intended

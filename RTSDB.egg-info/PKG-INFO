@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: RTSDB
-Version: 1.5
+Version: 1.6
 Summary: Create yourself a simple database with this package.
 Home-page: https://github.com/RandomTimeLP/RTS_DataBase/
 Author: RandomTimeTV
@@ -20,6 +20,12 @@ License-File: LICENCE
 # This is RTS_Simpledatabase
 
 a little module for Python to create databases.
+
+### "Patch notes"
+
+- Fixed a bug that prevented updates
+
+# How to use
 
 For the "How to use" lets get some sample data:
 

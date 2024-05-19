@@ -2,6 +2,12 @@
 
 a little module for Python to create databases.
 
+### "Patch notes"
+
+- Fixed a bug that prevented updates
+
+# How to use
+
 For the "How to use" lets get some sample data:
 
 | fieldname      | userid        | displayname   | balance  | joined     | note  

@@ -182,7 +182,7 @@ class DB:
             print(f"Updating field {field} to value {value}")
             record_to_update[field] = value
         else:
-            if field in self.header["fields"]:
+            if not field in self.header["fields"]:
                 raise ValueError(f'⛔ FieldNotInHeader:181 "{field}" is not initialized in the header. You need to recreate yuor database containing the new field.')
             if field in locked_fields:
                 raise LockedField(f'🔒 LockedField:182 "{field}" can not be updated.')

@@ -171,21 +171,24 @@ class DB:
         #modular_fields = [field for field, state in zip(self.header["fields"], self.header["states"]) if state == "modular"]
         unique_fields = [field for field, state in zip(self.header["fields"], self.header["states"]) if state in ["unique"]]
         locked_fields = [field for field, state in zip(self.header["fields"], self.header["states"]) if state in ["locked", "index"]]
+        
+        # checks             locked?   exists?   valid?
+        # unique nostring    No        should    yes
+       
 
         if field not in locked_fields and field in self.header["fields"] and self._validate_update({field:value}):
             if field in unique_fields and value is not None and any(record.get(field) == value for record in self.data if record is not record_to_update):
-                raise DataNotUnique(f'⛔ DataNotUnique: "{field}" must contain a unique value among all records.')
-            #print(f"Updating field {field} to value {value}")
+                raise DataNotUnique(f'⛔ DataNotUnique:177 "{field}" must contain a unique value among all records.')
+            print(f"Updating field {field} to value {value}")
             record_to_update[field] = value
         else:
+            if not field in self.header["fields"]:
+                raise ValueError(f'⛔ FieldNotInHeader:181 "{field}" is not initialized in the header. You need to recreate yuor database containing the new field.')
             if field in locked_fields:
-                raise LockedField(f'🔒 LockedField: "{field}" can not be updated.')
-            elif self._validate_update({field:value}):
-                raise InvalidField(f'⛔ InvalidField: "{field}" is not in the header')
-            elif not any(record.get(field) == value for record in self.data if record is not record_to_update):
-                raise DataNotUnique(f'⛔ DataNotUnique: "{field}" must contain a unique value among all records.')
-            else:
-                raise Exception('⚠️  UnknownError: You are not suposed to encounter this message, may report this issue to the developer.')
+                raise LockedField(f'🔒 LockedField:182 "{field}" can not be updated.')
+            if self._validate_update({field:value}):
+                raise InvalidField(f'⛔ InvalidField:184 "{field}" is not in the header')
+            raise Exception('⚠️  UnknownError:186 You are not suposed to encounter this message, may report this issue to the developer (RTSDB:188).')
         self._save()
 
     # See **Initiate the database** in the README.md

@@ -2,9 +2,9 @@
 
 a little module for Python to create databases.
 
-### "Patch notes"
+### Fix notes
 
-- Fixed a bug that prevented updates
+- Fixed a bug that did not throw a readable error if you try to update a field, that is not present in the headers.
 
 # How to use
 

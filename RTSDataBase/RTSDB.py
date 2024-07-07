@@ -8,14 +8,16 @@ from dataclasses import dataclass
 @dataclass
 class memory:
     events: dict = None
-
+    dbname: str = None
 MEM = memory()
+
 
 class DB:
     def __init__(self, filename):
         self.filename = filename + ".rtsdb"
         self.data = []
         self._load()
+        
 
     def _load(self):
     
@@ -291,18 +293,23 @@ class DB:
 
 
 
-class DatabaseEvent:
-    @staticmethod
-    def on_create(func):
-        MEM.events["on_create"] = func
-        return func
-    
-    @staticmethod
-    def on_update(func):
-        MEM.events["on_update"] = func
-        return func
-    
-    @staticmethod
-    def on_delete(func):
-        MEM.events["on_delete"] = func
-        return func
+    class DatabaseEvent:	
+
+        def on_create(databasename:str):
+            def deco(func):
+                MEM.events[databasename]["on_create"] = func
+                return func
+            return deco
+
+        @staticmethod
+        def on_update(databasename:str):    
+            def deco(func):
+                MEM.events[databasename] = func
+                return func
+            return deco
+        @staticmethod
+        def on_delete(databasename:str):
+            def deco(func):
+                MEM.events[MEM.db] = func
+                return func
+            return deco

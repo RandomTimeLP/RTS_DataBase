@@ -5,7 +5,7 @@ a little module for Python to create databases.
 ### Update notes
 
 - added Events
-you can now add an @DatabaseEvent.<on_create, on_update, on_delete> on a function and get the record being proccessed by one of these events
+you can now add an @DatabaseEvent.<on_create, on_update, on_delete>(databasename) on a function and get the record being proccessed by one of these events
 
 # How to use
 

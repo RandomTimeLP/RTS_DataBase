@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: RTSDB
-Version: 2.0
+Version: 2.1
 Summary: Create yourself a simple database with this package.
 Home-page: https://github.com/RandomTimeLP/RTS_DataBase/
 Author: RandomTimeTV
@@ -24,7 +24,7 @@ a little module for Python to create databases.
 ### Update notes
 
 - added Events
-you can now add an @DatabaseEvent.<on_create, on_update, on_delete> on a function and get the record being proccessed by one of these events
+you can now add an @DatabaseEvent.<on_create, on_update, on_delete>(databasename) on a function and get the record being proccessed by one of these events
 
 # How to use
 

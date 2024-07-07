@@ -293,23 +293,21 @@ class DB:
 
 
 
-    class DatabaseEvent:	
-
-        def on_create(databasename:str):
-            def deco(func):
-                MEM.events[databasename]["on_create"] = func
-                return func
-            return deco
-
-        @staticmethod
-        def on_update(databasename:str):    
-            def deco(func):
-                MEM.events[databasename] = func
-                return func
-            return deco
-        @staticmethod
-        def on_delete(databasename:str):
-            def deco(func):
-                MEM.events[MEM.db] = func
-                return func
-            return deco
+class DatabaseEvent:	
+    def on_create(databasename:str):
+        def deco(func):
+            MEM.events[databasename]["on_create"] = func
+            return func
+        return deco
+    @staticmethod
+    def on_update(databasename:str):    
+        def deco(func):
+            MEM.events[databasename] = func
+            return func
+        return deco
+    @staticmethod
+    def on_delete(databasename:str):
+        def deco(func):
+            MEM.events[MEM.db] = func
+            return func
+        return deco

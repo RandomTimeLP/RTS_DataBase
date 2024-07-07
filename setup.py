@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='RTSDB',
-    version='2.5',
+    version='2.6',
     packages=find_packages(),
     description='Create yourself a simple database with this package.',
     long_description=open('README.md').read(),

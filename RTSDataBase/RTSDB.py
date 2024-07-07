@@ -303,7 +303,7 @@ class DatabaseEvent:
             MEM.events[databasename] = {"on_create": [], "on_update": [], "on_delete": []}
 
         def deco(func):
-            MEM.events[databasename]["on_create"] = func
+            MEM.events[databasename]["on_create"].append(func)
             return func
         return deco
     @staticmethod
@@ -311,7 +311,7 @@ class DatabaseEvent:
         if not MEM.events.get(databasename):
             MEM.events[databasename] = {"on_create": [], "on_update": [], "on_delete": []}  
         def deco(func):
-            MEM.events[databasename] = func
+            MEM.events[databasename]["on_update"].append(func)
             return func
         return deco
     @staticmethod
@@ -319,6 +319,6 @@ class DatabaseEvent:
         if not MEM.events.get(databasename):
             MEM.events[databasename] = {"on_create": [], "on_update": [], "on_delete": []}
         def deco(func):
-            MEM.events[MEM.db] = func
+            MEM.events[databasename]["on_delete"].append(func)
             return func
         return deco

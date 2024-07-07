@@ -2,9 +2,10 @@
 
 a little module for Python to create databases.
 
-### Fix notes
+### Update notes
 
-- Fixed a bug that did not throw a readable error if you try to update a field, that is not present in the headers.
+- added Events
+you can now add an @DatabaseEvent.<on_create, on_update, on_delete> on a function and get the record being proccessed by one of these events
 
 # How to use
 

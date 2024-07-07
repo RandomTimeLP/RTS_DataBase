@@ -1,8 +1,15 @@
 import pickle,csv,io, re
 from RTSDataBase.typotest import TypoTest
 from .exceptions import *
+from dataclasses import dataclass
 # <...> = required
 # [...] = optional
+
+@dataclass
+class memory:
+    events: dict = None
+
+MEM = memory()
 
 class DB:
     def __init__(self, filename):
@@ -126,7 +133,7 @@ class DB:
         existing_ids = [record["__id"] for record in self.data]
         new_id = 1 if not existing_ids else max(existing_ids) + 1
         record["__id"] = new_id
-
+        MEM.events.get("on_create")(record)
         self.data.append(record)
         self._save()
 
@@ -189,6 +196,7 @@ class DB:
             if self._validate_update({field:value}):
                 raise InvalidField(f'⛔ InvalidField:184 "{field}" is not in the header')
             raise Exception('⚠️  UnknownError:186 You are not suposed to encounter this message, may report this issue to the developer (RTSDB:188).')
+        MEM.events.get("on_update")(record_to_update)	
         self._save()
 
     # See **Initiate the database** in the README.md
@@ -209,6 +217,7 @@ class DB:
 
     # See **Delete a record** in the README.md
     def delete(self, id):
+        MEM.events.get("on_delete")(self.data[id])
         self.data = [record for record in self.data if record.get('__id') != id]
         self._save()
 
@@ -278,4 +287,22 @@ class DB:
             pickle.dump((self.header,self.data), f)
             
 
+
+
+
+
+class DatabaseEvent:
+    @staticmethod
+    def on_create(func):
+        MEM.events["on_create"] = func
+        return func
     
+    @staticmethod
+    def on_update(func):
+        MEM.events["on_update"] = func
+        return func
+    
+    @staticmethod
+    def on_delete(func):
+        MEM.events["on_delete"] = func
+        return func

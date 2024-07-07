@@ -135,7 +135,8 @@ class DB:
         existing_ids = [record["__id"] for record in self.data]
         new_id = 1 if not existing_ids else max(existing_ids) + 1
         record["__id"] = new_id
-        MEM.events[self.eventname]["on_create"](record)
+        for listener in MEM.events[self.eventname]["on_create"]:
+            listener(record)
         self.data.append(record)
         self._save()
 
@@ -198,7 +199,8 @@ class DB:
             if self._validate_update({field:value}):
                 raise InvalidField(f'⛔ InvalidField:184 "{field}" is not in the header')
             raise Exception('⚠️  UnknownError:186 You are not suposed to encounter this message, may report this issue to the developer (RTSDB:188).')
-        MEM.events[self.eventname]["on_update"](record_to_update)	
+        for listener in MEM.events[self.eventname]["on_update"]:
+            listener(record_to_update)
         self._save()
 
     # See **Initiate the database** in the README.md
@@ -219,7 +221,8 @@ class DB:
 
     # See **Delete a record** in the README.md
     def delete(self, id):
-        MEM.events[self.eventname]["on_delete"](self.data[id])
+        for listener in MEM.events[self.eventname]["on_delete"]:
+            listener(self.data[id])
         self.data = [record for record in self.data if record.get('__id') != id]
         self._save()
 

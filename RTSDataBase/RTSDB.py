@@ -15,6 +15,7 @@ MEM = memory()
 class DB:
     def __init__(self, filename):
         self.filename = filename + ".rtsdb"
+        self.eventname = filename
         self.data = []
         self._load()
         
@@ -135,7 +136,7 @@ class DB:
         existing_ids = [record["__id"] for record in self.data]
         new_id = 1 if not existing_ids else max(existing_ids) + 1
         record["__id"] = new_id
-        MEM.events.get("on_create")(record)
+        MEM.events[self.eventname]["on_create"](record)
         self.data.append(record)
         self._save()
 
@@ -198,7 +199,7 @@ class DB:
             if self._validate_update({field:value}):
                 raise InvalidField(f'⛔ InvalidField:184 "{field}" is not in the header')
             raise Exception('⚠️  UnknownError:186 You are not suposed to encounter this message, may report this issue to the developer (RTSDB:188).')
-        MEM.events.get("on_update")(record_to_update)	
+        MEM.events[self.eventname]["on_update"](record_to_update)	
         self._save()
 
     # See **Initiate the database** in the README.md
@@ -219,7 +220,7 @@ class DB:
 
     # See **Delete a record** in the README.md
     def delete(self, id):
-        MEM.events.get("on_delete")(self.data[id])
+        MEM.events[self.eventname]["on_delete"](self.data[id])
         self.data = [record for record in self.data if record.get('__id') != id]
         self._save()
 
@@ -295,18 +296,24 @@ class DB:
 
 class DatabaseEvent:	
     def on_create(databasename:str):
+        if not MEM.events[databasename]:
+            MEM.events[databasename] = {}
         def deco(func):
             MEM.events[databasename]["on_create"] = func
             return func
         return deco
     @staticmethod
-    def on_update(databasename:str):    
+    def on_update(databasename:str):
+        if not MEM.events[databasename]:
+            MEM.events[databasename] = {}    
         def deco(func):
             MEM.events[databasename] = func
             return func
         return deco
     @staticmethod
     def on_delete(databasename:str):
+        if not MEM.events[databasename]:
+            MEM.events[databasename] = {}
         def deco(func):
             MEM.events[MEM.db] = func
             return func

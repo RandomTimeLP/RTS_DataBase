@@ -1,14 +1,13 @@
 import pickle,csv,io, re
 from RTSDataBase.typotest import TypoTest
 from .exceptions import *
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 # <...> = required
 # [...] = optional
 
 @dataclass
 class memory:
-    events: dict = None
-    dbname: str = None
+    events: dict = field(default_factory=dict)
 MEM = memory()
 
 
@@ -296,24 +295,26 @@ class DB:
 
 class DatabaseEvent:	
     def on_create(databasename:str):
-        if not MEM.events[databasename]:
-            MEM.events[databasename] = {}
+        print(MEM.events)
+        if not MEM.events.get(databasename):
+            MEM.events[databasename] = {"on_create": [], "on_update": [], "on_delete": []}
+
         def deco(func):
             MEM.events[databasename]["on_create"] = func
             return func
         return deco
     @staticmethod
     def on_update(databasename:str):
-        if not MEM.events[databasename]:
-            MEM.events[databasename] = {}    
+        if not MEM.events.get(databasename):
+            MEM.events[databasename] = {"on_create": [], "on_update": [], "on_delete": []}  
         def deco(func):
             MEM.events[databasename] = func
             return func
         return deco
     @staticmethod
     def on_delete(databasename:str):
-        if not MEM.events[databasename]:
-            MEM.events[databasename] = {}
+        if not MEM.events.get(databasename):
+            MEM.events[databasename] = {"on_create": [], "on_update": [], "on_delete": []}
         def deco(func):
             MEM.events[MEM.db] = func
             return func

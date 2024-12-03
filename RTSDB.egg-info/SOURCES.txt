@@ -4,6 +4,7 @@ setup.py
 RTSDB.egg-info/PKG-INFO
 RTSDB.egg-info/SOURCES.txt
 RTSDB.egg-info/dependency_links.txt
+RTSDB.egg-info/requires.txt
 RTSDB.egg-info/top_level.txt
 RTSDataBase/RTSDB.py
 RTSDataBase/__init__.py

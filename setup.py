@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='RTSDB',
-    version='2.6',
+    version='3.0',
     packages=find_packages(),
     description='Create yourself a simple database with this package.',
     long_description=open('README.md').read(),
@@ -20,5 +20,5 @@ setup(
         'Programming Language :: Python :: 3.9',
     ],
     keywords='database',
-    install_requires=[],
+    install_requires=["extradecorators","extrautilities","aiohttp"],
 )

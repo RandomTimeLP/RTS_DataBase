@@ -1,7 +1,11 @@
 import pickle,csv,io, re
 from RTSDataBase.typotest import TypoTest
+from ExtraDecorators import private
 from .exceptions import *
 from dataclasses import dataclass, field
+from ExtraUtils.timeBasedToken import TimeBasedToken
+import requests, json
+from aiohttp import web
 # <...> = required
 # [...] = optional
 
@@ -12,21 +16,117 @@ MEM = memory()
 
 
 class DB:
-    def __init__(self, filename):
+    def __init__(self, filename, databaseCreds:list[str]=[],server=False):
+        self.remoteDatabase = False
+        if re.match(r'^https?://', filename):
+            self.remoteDatabase = True
         self.filename = filename + ".rtsdb"
         self.eventname = filename
+        if databaseCreds:
+            self.mainToken = databaseCreds[0]
+            self.subToken = databaseCreds[1]
+            self.password = databaseCreds[2]
+
+        if server == True or isinstance(server, web.Application):
+            self._setupServer(app=server)
+
+        
         self.data = []
         self._load()
-        
 
+
+
+    @private
+    def _setupServer(self, app=None):
+        if not isinstance(app, web.Application):
+            app = web.Application()
+        app.router.add_post('/rtsrmtdb/create',create)
+        app.router.add_get('/rtsrmtdb/load',load)
+        app.router.add_patch('/rtsrmtdb/update',update)
+        app.router.add_delete('/rtsrmtdb/delete',delete)
+
+
+        async def load(request):
+            TBT = TimeBasedToken(self.mainToken, self.subToken)
+            try:
+                req = await request.json()
+                if not self.password == req.get('password'):
+                    return web.Response(text=TBT.encrypt(json.dumps({'status': 'Invalid password'})), status=401)
+                return web.Response(text=TBT.encrypt(json.dumps({'status': 'success', 'data': pickle.dumps((self.header, self.data))})), status=200)
+            except Exception as e:
+                return web.Response(text=TBT.encrypt(json.dumps({'status': str(e)})), status=500)
+
+
+        async def create(request):
+            TBT = TimeBasedToken(self.mainToken, self.subToken)
+
+            try:
+                req = await request.json()
+                data = data.get('data')
+                if not self.password == req.get('password'):
+                    return web.Response(text=TBT.encrypt(json.dumps({'status': 'Invalid password'})), status=401)
+                if not data:
+                    return web.Response(text=TBT.encrypt(json.dumps({'status': 'No record provided'})), status=400)
+                self.create(data)
+                return web.Response(text=TBT.encrypt(json.dumps({'status': 'success'})), status=201)
+            except Exception as e:
+                return web.Response(text=TBT.encrypt(json.dumps({'status': str(e)})), status=500)
+            
+        async def update(request):
+            TBT = TimeBasedToken(self.mainToken, self.subToken)
+            try:
+                req = await request.json()
+                if not self.password == req.get('password'):
+                    return web.Response(text=TBT.encrypt(json.dumps({'status': 'Invalid password'})), status=401)
+                data = req.get('data')
+                sourceField = data.get('srcField')
+                sourceValue = data.get('srcValue')
+                field = data.get('field')
+                value = data.get('value')
+                self.update({sourceField : sourceValue}, field, value)
+                return web.Response(text=TBT.encrypt(json.dumps({'status': 'success'})), status=200)
+            except Exception as e:
+                return web.Response(text=TBT.encrypt(json.dumps({'status': str(e)})), status=500)
+            
+        async def delete(request):
+            TBT = TimeBasedToken(self.mainToken, self.subToken)
+            try:
+                req = await request.json()
+                if not self.password == req.get('password'):
+                    return web.Response(text=TBT.encrypt(json.dumps({'status': 'Invalid password'})), status=401)
+                data = req.get('data')
+                sourceField = data.get('srcField')
+                sourceValue = data.get('srcValue')
+                self.delete(self.read({sourceField : sourceValue}, "__id"))
+                return web.Response(text=TBT.encrypt(json.dumps({'status': 'success'})), status=200)
+            except Exception as e:
+                return web.Response(text=TBT.encrypt(json.dumps({'status': str(e)})), status=500)
+            
+            
+
+        
+    @private
     def _load(self):
-    
-        try:
-            with open(self.filename, 'rb') as f:
-                self.header,self.data = pickle.load(f)
-        except FileNotFoundError:
-            self.data = []
-            self.header = None
+        if self.remoteDatabase:
+            TBT = TimeBasedToken(self.mainToken, self.subToken)
+            js = {
+                "password": self.password,
+                "data": ""
+            }
+            dat = TBT.encrypt(json.dumps(js))
+            response = requests.get(self.filename, data=dat)
+            if response.status_code == 200:
+                self.header, self.data = pickle.loads(response.content)
+            else:
+                self.data = []
+                self.header = None
+        else:
+            try:
+                with open(self.filename, 'rb') as f:
+                    self.header, self.data = pickle.load(f)
+            except FileNotFoundError:
+                self.data = []
+                self.header = None
 
     def dump(self):
         print(" .dump() is Debricated. Use 'dump_header()', 'header' and 'formated_dump([format=<csv|plain>])' instead.")
@@ -53,6 +153,7 @@ class DB:
             raise ValueError(f"⚠️ InputError: {format} is not a valid format. Suported formats are: 'csv', 'plain'")
 
     # Used only by Internal functions  
+    @private
     def _validate_types(self, field, record):
         type_map = {
             '__any': None,
@@ -81,6 +182,7 @@ class DB:
         return True
 
     # Used only by Internal functions
+    @private
     def _validate_create(self, record):
         if not isinstance(record, dict):
             raise ValueError(f"⚠️  ValueError: not a dict in {record}")
@@ -99,6 +201,7 @@ class DB:
                     self._validate_types(field, record)
     
     # Used only by Internal functions
+    @private
     def _validate_update(self, record):
         if not isinstance(record, dict):
             return False
@@ -135,8 +238,9 @@ class DB:
         existing_ids = [record["__id"] for record in self.data]
         new_id = 1 if not existing_ids else max(existing_ids) + 1
         record["__id"] = new_id
-        for listener in MEM.events[self.eventname]["on_create"]:
-            listener(record)
+        if self.eventname in MEM.events:
+            for listener in MEM.events[self.eventname]["on_create"]:
+                listener(record)
         self.data.append(record)
         self._save()
 
@@ -189,18 +293,19 @@ class DB:
         if field not in locked_fields and field in self.header["fields"] and self._validate_update({field:value}):
             if field in unique_fields and value is not None and any(record.get(field) == value for record in self.data if record is not record_to_update):
                 raise DataNotUnique(f'⛔ DataNotUnique:177 "{field}" must contain a unique value among all records.')
-            print(f"Updating field {field} to value {value}")
+
             record_to_update[field] = value
         else:
             if not field in self.header["fields"]:
-                raise ValueError(f'⛔ FieldNotInHeader:181 "{field}" is not initialized in the header. You need to recreate yuor database containing the new field.')
+                raise ValueError(f'⛔ FieldNotInHeader:181 "{field}" is not initialized in the header. You need to recreate your database containing the new field.')
             if field in locked_fields:
                 raise LockedField(f'🔒 LockedField:182 "{field}" can not be updated.')
             if self._validate_update({field:value}):
                 raise InvalidField(f'⛔ InvalidField:184 "{field}" is not in the header')
             raise Exception('⚠️  UnknownError:186 You are not suposed to encounter this message, may report this issue to the developer (RTSDB:188).')
-        for listener in MEM.events[self.eventname]["on_update"]:
-            listener(record_to_update)
+        if self.eventname in MEM.events:
+            for listener in MEM.events[self.eventname]["on_update"]:
+                listener(record_to_update)
         self._save()
 
     # See **Initiate the database** in the README.md
@@ -221,8 +326,9 @@ class DB:
 
     # See **Delete a record** in the README.md
     def delete(self, id):
-        for listener in MEM.events[self.eventname]["on_delete"]:
-            listener(self.data[id])
+        if self.eventname in MEM.events:
+            for listener in MEM.events[self.eventname]["on_delete"]:
+                listener(self.data[id])
         self.data = [record for record in self.data if record.get('__id') != id]
         self._save()
 
@@ -287,10 +393,34 @@ class DB:
         return None
     
     # Does not need to be manually called
+    @private
     def _save(self):
         with open(self.filename, 'wb') as f:
             pickle.dump((self.header,self.data), f)
-            
+
+    @private
+    def _save_to_remote(self, action, data):
+        js = {
+            "password": self.password,
+            "data": data
+        }
+        TBT = TimeBasedToken(self.mainToken, self.subToken)
+        dat = TBT.encrypt(json.dumps(js))
+
+
+        post = ["create"]
+        patch = ["update"]
+        delete = ["delete"]
+
+        if action in post:
+            response = requests.post(self.filename+ f"/{action}", data=dat)
+        elif action in patch:
+            response = requests.patch(self.filename+ f"/{action}", data=dat)
+        elif action in delete:
+            response = requests.delete(self.filename+ f"/{action}", data=dat)
+        if response.status_code != 200:
+            raise Exception(f"Failed to edit data to remote database. Status code: {response.status_code}")
+        
 
 
 
@@ -298,7 +428,6 @@ class DB:
 
 class DatabaseEvent:	
     def on_create(databasename:str):
-        print(MEM.events)
         if not MEM.events.get(databasename):
             MEM.events[databasename] = {"on_create": [], "on_update": [], "on_delete": []}
 

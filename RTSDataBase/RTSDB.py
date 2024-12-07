@@ -27,8 +27,13 @@ class DB:
             self.subToken = databaseCreds[1]
             self.password = databaseCreds[2]
 
-        if server == True or isinstance(server, web.Application):
-            self._setupServer(app=server)
+        if isinstance(server, list):
+            data = server
+
+        if server == True or isinstance(server, web.Application) or isinstance(server, list):
+            if not data:
+                data = ["127.0.0.1", 9876]
+            self._setupServer(app=server, data=data)
 
         
         self.data = []
@@ -37,14 +42,8 @@ class DB:
 
 
     @private
-    def _setupServer(self, app=None):
-        if not isinstance(app, web.Application):
-            app = web.Application()
-        app.router.add_post('/rtsrmtdb/create',create)
-        app.router.add_get('/rtsrmtdb/load',load)
-        app.router.add_patch('/rtsrmtdb/update',update)
-        app.router.add_delete('/rtsrmtdb/delete',delete)
-
+    def _setupServer(self, app=None, data=["127.0.0.1", 9876]):
+        
 
         async def load(request):
             TBT = TimeBasedToken(self.mainToken, self.subToken)
@@ -102,6 +101,14 @@ class DB:
             except Exception as e:
                 return web.Response(text=TBT.encrypt(json.dumps({'status': str(e)})), status=500)
             
+        if not app or not  isinstance(app, web.Application):
+            app = web.Application()
+        app.router.add_post('/rtsrmtdb/create',create)
+        app.router.add_get('/rtsrmtdb/load',load)
+        app.router.add_patch('/rtsrmtdb/update',update)
+        app.router.add_delete('/rtsrmtdb/delete',delete)
+        web.run_app(app, host=data[0], port=data[1])
+            
             
 
         
@@ -114,7 +121,7 @@ class DB:
                 "data": ""
             }
             dat = TBT.encrypt(json.dumps(js))
-            response = requests.get(self.filename, data=dat)
+            response = requests.get(self.filename+ "/load", data=dat)
             if response.status_code == 200:
                 self.header, self.data = pickle.loads(response.content)
             else:
